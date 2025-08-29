@@ -1,12 +1,16 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import redis.asyncio as aioredis
+import os
+
+load_dotenv()
 
 async def lifespan(app: FastAPI):
     # Startup code
 
     global redis
-    redis = await aioredis.from_url("redis://localhost:6379")
+    redis = await aioredis.from_url(f"{os.getenv('REDIS_URL')}")
     print("Starting up...")
 
     yield

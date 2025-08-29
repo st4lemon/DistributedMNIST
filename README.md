@@ -22,6 +22,19 @@ Also: FastAPI, Postgres, Redis
 - Pull Docker image 
 - Run docker start script (TODO)
 
+# Structure
+
+### backend
+API service to receive data for inference and provide status and results of submitted jobs
+
+### db
+Database service 
+- `USERS`: stores information on users submitting jobs
+- `JOB`: stores overall status of a job: processing, completed, error
+- `BATCH`: stores results of batches indexed first by job id, then by batch index. We can query a window of results from the job by using a range-search on a tree index
+
+
+
 # Changelog
 - 8/29/2025: Initial commit, set up simple redis demo for workers
 
