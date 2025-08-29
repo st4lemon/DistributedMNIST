@@ -24,3 +24,7 @@ Also: FastAPI, Postgres, Redis
 
 # Changelog
 - 8/29/2025: Initial commit
+
+### TODO
+- Set up Dockerfiles for backend and worker, and Docker-compose for the whole repo
+- Run a skeleton job locally with a Redis image running in a Docker container, to ensure you know how to send messages with Redis. 
