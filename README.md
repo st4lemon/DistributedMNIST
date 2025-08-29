@@ -23,7 +23,7 @@ Also: FastAPI, Postgres, Redis
 - Run docker start script (TODO)
 
 # Changelog
-- 8/29/2025: Initial commit
+- 8/29/2025: Initial commit, set up simple redis demo for workers
 
 ### TODO
 - Set up Dockerfiles for backend and worker, and Docker-compose for the whole repo
