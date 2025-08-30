@@ -1,13 +1,17 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-from ..db import *
+from common.db import *
+
+import datetime
 
 class Message(Base):
     __tablename__ = 'messages'
     
     id = Column(Integer, primary_key=True, index=True)
     content = Column(String, index=True)
+    sent = Column(DateTime, default=datetime.datetime.now)
     status = Column(String, default='sent')
+
 
 
 async def create_message(db: AsyncSession, content: str, status: str = 'sent'):

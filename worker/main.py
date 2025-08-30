@@ -1,26 +1,43 @@
 import asyncio
-import redis.asyncio as aioredis
-from db.db import *
-import db.models.message as message
+import redis.asyncio as red
+from common.db import *
+import common.models.message as message
+from common.redis_client import get_redis
+from dotenv import load_dotenv
+
+load_dotenv()
+
+STREAM_NAME = "messages"
+CONSUMER_GROUP = "workers"
+CONSUMER_NAME = "worker-1"
 
 async def worker():
     
-    redis = await aioredis.from_url("redis://localhost:6379")
-    pubsub = redis.pubsub()
-    await pubsub.subscribe("messages")
+    redis = await get_redis()
 
     print("Worker started, waiting for messages...")
-    async for msg in pubsub.listen():
-        if msg['type'] == 'message':
-            print(f"Received message: {msg['data'].decode()}")
+    while True:
+        resp = await redis.xreadgroup( 
+            groupname=CONSUMER_GROUP,
+            consumername=CONSUMER_NAME,
+            streams={STREAM_NAME: ">"},
+            count=1,
+            block=5000
+        )
+        if resp:
+            stream, messages = resp[0]
+            for msg_id, fields in messages:
+                print("Got message:", fields)
 
-            async with AsyncSessionLocal() as db:
-                msg_record = await message.get_message_by_content(db=db, content=msg['data'].decode())
-                print("Done getting")
-                await message.update_message(db=db, message_id=msg_record.id, new_status="processed")
-                print("Done updating")
-                await db.commit()
-        print('Done with current message, ready for new one')
+                async with AsyncSessionLocal() as db:
+                    await message.update_message(
+                        db,
+                        message_id=int(fields["message_id"]),
+                        new_status="processed"
+                    )
+                
+                await redis.xack(STREAM_NAME, CONSUMER_GROUP, msg_id)
+
 
 if __name__ == "__main__":
     asyncio.run(worker())
