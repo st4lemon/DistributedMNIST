@@ -8,8 +8,14 @@ from dotenv import load_dotenv
 import asyncpg
 import os
 
+print('db loading env')
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+
+print('db done loading env')
+DATABASE_USER = os.getenv("DATABASE_USER")
+DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
+DATABASE_URL = f'postgresql+asyncpg://{DATABASE_USER}:{DATABASE_PASSWORD}@postgres:5432/mnist_db'
+print("database url:", DATABASE_URL)
 
 engine = create_async_engine(
     DATABASE_URL,

@@ -31,9 +31,11 @@ async def create_consumer_group(redis_client: redis.Redis):
 
 async def lifespan(app: FastAPI):
     # Startup code
-
+    print("Just started")
     app.state.redis = await get_redis()
+    print("Got redis")
     await initialize_db()
+    print("Got db")
     await create_consumer_group(app.state.redis)
 
     print("Starting up...")

@@ -19,8 +19,22 @@ Also: FastAPI, Postgres, Redis
 
 ### Docker setup
 
-- Pull Docker image 
-- Run docker start script (TODO)
+Set up Docker network:
+- `docker network create mnist-net`
+
+To pull docker images:
+- Pull api with `docker pull st4lemon/mnist-api`
+- Pull worker with `docker pull st4lemon/mnist-worker`
+
+To build images instead:
+- Build api with `docker build -t st4lemon/mnist-api --target api .`
+- Build worker with `docker build -t st4lemon/mnist-worker --target worker .`
+
+Run containers:
+- Run redis with `docker run --name redis --network mnist-net -p 6379:6379 redis`
+- Run postgres with `docker run --name postgres --network mnist-net -p 5432:5432 --env-file .postgres.env -v pgdata:/var/lib/postgresql/data postgres:17`
+- Run api with `docker run --name api --network mnist-net -p 8000:8000 --env-file .env st4lemon/mnist-api`
+- Run worker with `docker run --name worker --network mnist-net --env-file .env st4lemon/mnist-worker`
 
 # Structure
 

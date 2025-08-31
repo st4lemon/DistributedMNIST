@@ -7,12 +7,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+print("worker loading")
+
 STREAM_NAME = "messages"
 CONSUMER_GROUP = "workers"
 CONSUMER_NAME = "worker-1"
 
 async def worker():
     
+    print("Entered worker!")
     redis = await get_redis()
 
     print("Worker started, waiting for messages...")
@@ -40,4 +43,5 @@ async def worker():
 
 
 if __name__ == "__main__":
+    print("Starting worker:")
     asyncio.run(worker())
