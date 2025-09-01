@@ -77,6 +77,25 @@ async def ping(redis_client=Depends(lambda: app.state.redis)):
 @app.post("/message")
 async def send_pubsub_message(msg: str, db: AsyncSession = Depends(get_db), redis_client=Depends(lambda: app.state.redis)): 
     # publishes a message to subscribers
-    msg = await message.create_message(db, content=msg)
-    await redis_client.xadd(STREAM_NAME, {"message_id": str(msg.id), "content": str(msg.content)})
-    return {"message": f"Message '{msg.content}' sent to subscribers."}
+
+    job_record = await job.create_job(
+        db=db, 
+        job_type="message",
+        job_metadata={
+            'batch_count': 1,
+            'batch_size': 1
+        }
+    )
+    
+    batch_record = await batch.create_batch(
+        db=db,
+        job_id=job_record.job_id,
+        batch_id=0,
+        payload= {
+            'content': msg
+        }
+    )
+
+    await redis_client.xadd(STREAM_NAME, { "id": str(batch_record.id), "job_type": "message" })
+    return { "job_id": str(job_record.job_id) }
+

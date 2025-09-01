@@ -1,9 +1,10 @@
 import asyncio
-import redis.asyncio as red
+import redis.asyncio as redis
 from common.db import *
 import common.models.message as message
 import common.models.job as job
 import common.models.batch as batch
+from worker.message import *
 from common.redis_client import get_redis
 from dotenv import load_dotenv
 
@@ -20,11 +21,11 @@ CONSUMER_NAME = f"worker-{os.getenv('HOSTNAME')}"
 async def worker():
     
     print("Entered worker", CONSUMER_NAME)
-    redis = await get_redis()
+    redis_client = await get_redis()
 
     print("Worker started, waiting for messages...", flush=True)
     while True:
-        resp = await redis.xreadgroup( 
+        resp = await redis_client.xreadgroup( 
             groupname=CONSUMER_GROUP,
             consumername=CONSUMER_NAME,
             streams={STREAM_NAME: ">"},
@@ -35,15 +36,13 @@ async def worker():
             stream, messages = resp[0]
             for msg_id, fields in messages:
                 print("Got message:", fields)
+                bid = int(fields['id'])
+                job_type = fields['job_type']
 
-                async with AsyncSessionLocal() as db:
-                    await message.update_message(
-                        db,
-                        message_id=int(fields["message_id"]),
-                        new_status="processed"
-                    )
+                if job_type == "message":
+                    await process_message(bid=bid)
                 
-                await redis.xack(STREAM_NAME, CONSUMER_GROUP, msg_id)
+                await redis_client.xack(STREAM_NAME, CONSUMER_GROUP, msg_id)
 
 
 if __name__ == "__main__":
