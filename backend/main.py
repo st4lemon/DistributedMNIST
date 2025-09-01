@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
@@ -7,12 +7,14 @@ from redis.exceptions import ResponseError
 import redis.asyncio as redis
 import os
 import common.models.message as message
+import common.models.job as job
+import common.models.batch as batch
 from common.db import *
 from common.redis_client import get_redis
 
 load_dotenv()
 
-STREAM_NAME = "messages"
+STREAM_NAME = "jobs"
 CONSUMER_GROUP = "workers"
 
 async def create_consumer_group(redis_client: redis.Redis):
@@ -50,11 +52,27 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
-async def ping():
-    return JSONResponse(
-        content={"message": "pong"},
-        status_code=200
-    )
+async def ping(redis_client=Depends(lambda: app.state.redis)):
+    try:
+        pong = await redis_client.ping()
+        if not pong:
+            print("Redis not responding")
+            raise HTTPException(status_code=503, detail="Redis not responding")
+        
+        groups = await redis_client.xinfo_groups(STREAM_NAME)
+        print(groups)
+        if not any(g['name'] == CONSUMER_GROUP for g in groups):
+            print("Consumer group not ready")
+            raise HTTPException(status_code=503, detail="Consumer group not ready")
+        return JSONResponse(
+            content={"message": "pong"},
+            status_code=200
+        )
+    except Exception as e:
+        print(f"Redis error: {e}")
+        raise HTTPException(status_code=503, detail=f"Redis error: {e}")
+    
+    
 
 @app.post("/message")
 async def send_pubsub_message(msg: str, db: AsyncSession = Depends(get_db), redis_client=Depends(lambda: app.state.redis)): 

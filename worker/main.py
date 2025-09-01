@@ -2,23 +2,27 @@ import asyncio
 import redis.asyncio as red
 from common.db import *
 import common.models.message as message
+import common.models.job as job
+import common.models.batch as batch
 from common.redis_client import get_redis
 from dotenv import load_dotenv
+
+import os
 
 load_dotenv()
 
 print("worker loading")
 
-STREAM_NAME = "messages"
+STREAM_NAME = "jobs"
 CONSUMER_GROUP = "workers"
-CONSUMER_NAME = "worker-1"
+CONSUMER_NAME = f"worker-{os.getenv('HOSTNAME')}"
 
 async def worker():
     
-    print("Entered worker!")
+    print("Entered worker", CONSUMER_NAME)
     redis = await get_redis()
 
-    print("Worker started, waiting for messages...")
+    print("Worker started, waiting for messages...", flush=True)
     while True:
         resp = await redis.xreadgroup( 
             groupname=CONSUMER_GROUP,
