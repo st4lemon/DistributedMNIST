@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
 from redis.exceptions import ResponseError
@@ -50,7 +51,10 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def ping():
-    return {"message": "pong"}
+    return JSONResponse(
+        content={"message": "pong"},
+        status_code=200
+    )
 
 @app.post("/message")
 async def send_pubsub_message(msg: str, db: AsyncSession = Depends(get_db), redis_client=Depends(lambda: app.state.redis)): 

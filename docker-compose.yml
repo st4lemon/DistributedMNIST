@@ -1,0 +1,73 @@
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    env_file:
+      - .postgres.env
+    ports:
+      - "5432:5432"
+    networks:
+      - mnist-net
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+      start_period: 5s
+
+  redis:
+    image: redis
+    container_name: redis
+    ports: 
+      - "6379:6379"
+    networks:
+      - mnist-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      target: api
+    image: st4lemon/mnist-api
+    container_name: mnist-api
+    ports: 
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mnist-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -X GET http://localhost:8000/ || exit 1"]
+      interval: 5s
+      retries: 5
+  
+  worker:
+    build:
+      context: .
+      target: worker
+    image: st4lemon/mnist-worker
+    container_name: mnist-worker
+    env_file:
+      - .env
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - mnist-net
+
+networks:
+  mnist-net:
+    driver: bridge
+
+volumes:
+  pgdata:

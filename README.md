@@ -5,19 +5,19 @@
 - Coordinate multiple services using Docker-Compose
 - Push to AWS and host online
 
-## Installation
+# Installation
 
 Running on Python 3.12 and Ubuntu 22.04
 Also: FastAPI, Postgres, Redis
 
-### Local setup
+## Local setup
 
 - Create a virtual environment with your chosen python installation: `python3.12 -m venv venv`
 - Actiavte the environment: `source venv/bin/activate`
 - Install requirements: `pip install -r requirements.txt`
 - Run local start script (TODO)
 
-### Docker setup
+## Docker setup
 
 Set up Docker network:
 - `docker network create mnist-net`
@@ -36,6 +36,15 @@ Run containers:
 - Run api with `docker run --name api --network mnist-net -p 8000:8000 --env-file .env st4lemon/mnist-api`
 - Run worker with `docker run --name worker --network mnist-net --env-file .env st4lemon/mnist-worker`
 
+Pushing docker images to repository:
+- Create tags with `docker image tag <image_name> <image_name>:<tag>`
+    - Example: `docker image tag st4lemon/mnist-api st4lemon/mnist-api:v1.0`
+- Push with `docker image push --all-tags <image_name>`
+    - Example: `docker image push --all-tags st4lemon/mnist-worker`
+
+### Using docker-compose
+Run `docker compose up --build` to build all images
+
 # Structure
 
 ### backend
@@ -50,6 +59,8 @@ Database service
 
 
 # Changelog
+- 8/31/2025: Added support for docker-compose
+- 8/30/2025: Created Dockerfile for API and Worker service, and configured connection between API, Worker, Redis, and Postgres. 
 - 8/29/2025: Initial commit, set up simple redis demo for workers
 
 ### TODO
