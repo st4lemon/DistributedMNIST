@@ -43,7 +43,12 @@ async def initialize_db():
 
 async def get_db():
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except:
+            await session.rollback()
+            raise
 
 def ping():
     print('pong')

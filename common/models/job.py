@@ -21,13 +21,13 @@ async def create_job(db: AsyncSession, job_type: str, job_metadata: dict, status
     new_job = Job(job_type=job_type, job_metadata=job_metadata, status=status)
     try:
         db.add(new_job)
-        await db.commit()
+        await db.flush()
         await db.refresh(new_job)
         return new_job
     except Exception as e:
         print(f"Error creating job: {e}")
         await db.rollback()
-        return None
+        raise e
     
 async def update_job_status_by_id(db: AsyncSession, id: int, new_status: str):
     print('Start update')
@@ -38,7 +38,7 @@ async def update_job_status_by_id(db: AsyncSession, id: int, new_status: str):
         job = result.scalars().first()
         if job:
             job.status = new_status or job.status
-            await db.commit()
+            await db.flush()
             await db.refresh(job)
             print(f'returned successfully, new status: {job.status}')
             return job
@@ -47,7 +47,7 @@ async def update_job_status_by_id(db: AsyncSession, id: int, new_status: str):
     except Exception as e:
         print(f"Error updating job: {e}")
         await db.rollback()
-        return None
+        raise e
         
 async def update_job_status_by_job_id(db: AsyncSession, job_id: int, new_status: str):
     print('Start update')
@@ -58,7 +58,7 @@ async def update_job_status_by_job_id(db: AsyncSession, job_id: int, new_status:
         job = result.scalars().first()
         if job:
             job.status = new_status or job.status
-            await db.commit()
+            await db.flush()
             await db.refresh(job)
             print(f'returned successfully, new status: {job.status}')
             return job
@@ -67,7 +67,7 @@ async def update_job_status_by_job_id(db: AsyncSession, job_id: int, new_status:
     except Exception as e:
         print(f"Error updating job: {e}")
         await db.rollback()
-        return None
+        raise e
 
 async def get_job_by_id(db: AsyncSession, id: int):
     try:
@@ -78,7 +78,7 @@ async def get_job_by_id(db: AsyncSession, id: int):
         return job
     except Exception as e:
         print(f"Error retrieving job: {e}")
-        return None
+        raise e
     
 async def get_job_by_job_id(db: AsyncSession, job_id: int):
     try:
@@ -89,7 +89,7 @@ async def get_job_by_job_id(db: AsyncSession, job_id: int):
         return job
     except Exception as e:
         print(f"Error retrieving job: {e}")
-        return None
+        raise e
     
 async def delete_job(db: AsyncSession, id: int):
     try:
@@ -99,13 +99,13 @@ async def delete_job(db: AsyncSession, id: int):
         job = result.scalars().first()
         if job:
             await db.delete(job)
-            await db.commit()
+            await db.flush()
             return True
         return False
     except Exception as e:
         print(f"Error deleting job: {e}")
         await db.rollback()
-        return False    
+        raise e   
 
 
 if __name__ == "__main__":
