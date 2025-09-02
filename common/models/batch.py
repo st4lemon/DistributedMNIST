@@ -27,13 +27,13 @@ async def create_batch(db: AsyncSession, job_id: str, batch_id: int, payload: di
     new_batch = Batch(job_id=job_id, batch_id=batch_id, status=status, payload=payload, result=result, error=error)
     try:
         db.add(new_batch)
-        await db.commit()
+        await db.flush()
         await db.refresh(new_batch)
         return new_batch
     except Exception as e:
         print(f"Error creating batch: {e}")
         await db.rollback()
-        return None
+        raise e
     
 async def update_batch_status_by_id(db: AsyncSession, id: int, new_status: str):
     print('Start update')
@@ -44,7 +44,7 @@ async def update_batch_status_by_id(db: AsyncSession, id: int, new_status: str):
         batch = result.scalars().first()
         if batch:
             batch.status = new_status or batch.status
-            await db.commit()
+            await db.flush()
             await db.refresh(batch)
             print(f'returned successfully, new status: {batch.status}')
             return batch
@@ -53,7 +53,7 @@ async def update_batch_status_by_id(db: AsyncSession, id: int, new_status: str):
     except Exception as e:
         print(f"Error updating batch: {e}")
         await db.rollback()
-        return None
+        raise e
         
 async def update_batch_status_by_batch_id(db: AsyncSession, batch_id: int, new_status: str):
     print('Start update')
@@ -64,7 +64,7 @@ async def update_batch_status_by_batch_id(db: AsyncSession, batch_id: int, new_s
         batch = result.scalars().first()
         if batch:
             batch.status = new_status or batch.status
-            await db.commit()
+            await db.flush()
             await db.refresh(batch)
             print(f'returned successfully, new status: {batch.status}')
             return batch
@@ -73,7 +73,7 @@ async def update_batch_status_by_batch_id(db: AsyncSession, batch_id: int, new_s
     except Exception as e:
         print(f"Error updating batch: {e}")
         await db.rollback()
-        return None
+        raise e
 
 async def get_batch_by_id(db: AsyncSession, id: int):
     try:
@@ -84,7 +84,7 @@ async def get_batch_by_id(db: AsyncSession, id: int):
         return batch
     except Exception as e:
         print(f"Error retrieving batch: {e}")
-        return None
+        raise e
     
 async def get_batch_by_batch_id(db: AsyncSession, batch_id: int):
     try:
@@ -95,7 +95,7 @@ async def get_batch_by_batch_id(db: AsyncSession, batch_id: int):
         return batch
     except Exception as e:
         print(f"Error retrieving batch: {e}")
-        return None
+        raise e
     
 async def delete_batch(db: AsyncSession, id: int):
     try:
@@ -105,13 +105,13 @@ async def delete_batch(db: AsyncSession, id: int):
         batch = result.scalars().first()
         if batch:
             await db.delete(batch)
-            await db.commit()
+            await db.flush()
             return True
         return False
     except Exception as e:
         print(f"Error deleting batch: {e}")
         await db.rollback()
-        return False    
+        raise e
 
 
 if __name__ == "__main__":

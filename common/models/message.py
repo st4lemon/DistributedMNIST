@@ -18,13 +18,13 @@ async def create_message(db: AsyncSession, content: str = None, status: str = 's
     new_message = Message(content=content)
     try:
         db.add(new_message)
-        await db.commit()
+        await db.flush()
         await db.refresh(new_message)
         return new_message
     except Exception as e:
         print(f"Error creating message: {e}")
         await db.rollback()
-        return None
+        raise e
     
 async def update_message(db: AsyncSession, message_id: int, new_content: str = None, new_status: str = None):
     print('Start update')
@@ -36,7 +36,7 @@ async def update_message(db: AsyncSession, message_id: int, new_content: str = N
         if message:
             message.content = new_content or message.content
             message.status = new_status or message.status
-            await db.commit()
+            await db.flush()
             await db.refresh(message)
             print(f'returned successfully, new status: {message.status}')
             return message
@@ -45,7 +45,7 @@ async def update_message(db: AsyncSession, message_id: int, new_content: str = N
     except Exception as e:
         print(f"Error updating message: {e}")
         await db.rollback()
-        return None
+        raise e
 
 async def get_message_by_id(db: AsyncSession, message_id: int):
     try:
@@ -56,7 +56,7 @@ async def get_message_by_id(db: AsyncSession, message_id: int):
         return message
     except Exception as e:
         print(f"Error retrieving message: {e}")
-        return None
+        raise e
     
 async def get_message_by_content(db: AsyncSession, content: str):
     print('Start get by content')
@@ -68,7 +68,7 @@ async def get_message_by_content(db: AsyncSession, content: str):
         return message
     except Exception as e:
         print(f"Error retrieving message: {e}")
-        return None
+        raise e
 
 async def delete_message(db: AsyncSession, message_id: int):
     try:
@@ -78,13 +78,13 @@ async def delete_message(db: AsyncSession, message_id: int):
         message = result.scalars().first()
         if message:
             await db.delete(message)
-            await db.commit()
+            await db.flush()
             return True
         return False
     except Exception as e:
         print(f"Error deleting message: {e}")
         await db.rollback()
-        return False    
+        raise e   
 
 
 if __name__ == "__main__":
