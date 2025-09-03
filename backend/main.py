@@ -95,6 +95,6 @@ async def send_pubsub_message(msg: str, db: AsyncSession = Depends(get_db), redi
                 }
             )
         
-    await redis_client.xadd(app.state.redis_client.JOB_STREAM, { "id": str(batch_record.id), "job_type": "message" })
+    await redis_client.xadd(app.state.redis_client.JOB_STREAM, { "id": str(batch_record.id), "job_type": "message", "retries": 0 })
     return { "job_id": str(job_record.job_id) }
 

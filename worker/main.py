@@ -37,9 +37,17 @@ async def worker():
                 print("Got message:", fields)
                 bid = int(fields['id'])
                 job_type = fields['job_type']
+                retries = int(fields['retries'])
 
-                if job_type == "message":
-                    await process_message(bid=bid)
+                try:
+                    if job_type == "message":
+                        await process_message(bid=bid)
+                except Exception as e:
+                    # readd message to stream with retries
+                    retries += 1
+                    if retries >= 5:
+                        pass # add to DLQ
+                    await r.xadd(redis_client.JOB_STREAM, { "id": bid, "job_type": job_type, "retries": retries })
                 
                 await r.xack(redis_client.JOB_STREAM, redis_client.JOB_GROUP, msg_id)
 

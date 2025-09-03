@@ -59,6 +59,7 @@ Database service
 
 
 # Changelog
+- 9/02/2025: Improved database/redis usage to support atomicity and retries
 - 8/31/2025: Added support for docker-compose
 - 8/30/2025: Created Dockerfile for API and Worker service, and configured connection between API, Worker, Redis, and Postgres. 
 - 8/29/2025: Initial commit, set up simple redis demo for workers
