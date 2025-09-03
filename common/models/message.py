@@ -15,7 +15,7 @@ class Message(Base):
 
 
 async def create_message(db: AsyncSession, content: str = None, status: str = 'sent'):
-    new_message = Message(content=content)
+    new_message = Message(content=content, status=status)
     try:
         db.add(new_message)
         await db.flush()

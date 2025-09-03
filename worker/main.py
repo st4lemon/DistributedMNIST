@@ -46,8 +46,9 @@ async def worker():
                     # readd message to stream with retries
                     retries += 1
                     if retries >= 5:
-                        pass # add to DLQ
-                    await r.xadd(redis_client.JOB_STREAM, { "id": bid, "job_type": job_type, "retries": retries })
+                        await r.xadd(redis_client.JOB_DLQ, { "id": bid, "job_type": job_type, "retries": retries })
+                    else:
+                        await r.xadd(redis_client.JOB_STREAM, { "id": bid, "job_type": job_type, "retries": retries })
                 
                 await r.xack(redis_client.JOB_STREAM, redis_client.JOB_GROUP, msg_id)
 

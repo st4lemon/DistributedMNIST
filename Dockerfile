@@ -37,3 +37,13 @@ COPY common /app/common
 CMD ["python", "-m", "worker.main"]
 
 
+# Reclaimer service
+FROM base AS reclaimer
+WORKDIR /app
+COPY reclaimer /app/reclaimer
+COPY common /app/common
+
+# Run Worker
+CMD ["python", "-m", "reclaimer.main"]
+
+

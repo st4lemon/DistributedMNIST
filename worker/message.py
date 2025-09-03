@@ -24,6 +24,10 @@ async def process_message(bid: int):
                     status='processed'
                 )
 
+                if random.random() < 0.5:
+                    print('catastrophe 1')
+                    exit(1)
+
                 await batch.update_batch_status_by_id(db=db, id=bid, new_status='done')
 
                 if random.random() < 0.05:

@@ -25,7 +25,7 @@ services:
     networks:
       - mnist-net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli ping"]
       interval: 5s
       retries: 5
 
@@ -56,7 +56,22 @@ services:
       context: .
       target: worker
     image: st4lemon/mnist-worker
-    restart: on-failure:5
+    restart: "on-failure:5"
+    env_file:
+      - .env
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - mnist-net
+
+  reclaimer:
+    build:
+      context: .
+      target: reclaimer
+    image: st4lemon/mnist-reclaimer
+    container_name: mnist-reclaimer
+    restart: "on-failure:5"
     env_file:
       - .env
     depends_on:
