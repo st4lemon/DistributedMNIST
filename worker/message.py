@@ -2,8 +2,10 @@ import common.models.message as message
 import common.models.batch as batch
 import common.models.job as job
 from common.db import *
+import time
 
 async def process_message(bid: int):
+     time.sleep(1)
      async with AsyncSessionLocal() as db:
         async with db.begin():
             batch_record: batch.Batch = await batch.get_batch_by_id(db=db, id=bid)
@@ -21,4 +23,5 @@ async def process_message(bid: int):
                 job_id=batch_record.job_id,
                 new_status="done"
             )
+        
     

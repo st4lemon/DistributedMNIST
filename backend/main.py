@@ -10,36 +10,27 @@ import common.models.message as message
 import common.models.job as job
 import common.models.batch as batch
 from common.db import *
-from common.redis_client import get_redis
+from common.redis_client import *
 
 load_dotenv()
-
-STREAM_NAME = "jobs"
-CONSUMER_GROUP = "workers"
-
-async def create_consumer_group(redis_client: redis.Redis):
-    """
-    Creates a Redis stream consumer group if it doesn't exist.
-    """
-    try:
-        # '$' means start reading only new messages
-        await redis_client.xgroup_create(STREAM_NAME, CONSUMER_GROUP, id="$", mkstream=True)
-        print(f"Consumer group '{CONSUMER_GROUP}' created on stream '{STREAM_NAME}'.")
-    except ResponseError as e:
-        if "BUSYGROUP" in str(e):
-            # Group already exists
-            print(f"Consumer group '{CONSUMER_GROUP}' already exists.")
-        else:
-            raise
 
 async def lifespan(app: FastAPI):
     # Startup code
     print("Just started")
-    app.state.redis = await get_redis()
+    app.state.redis_client = RedisClient()
+    app.state.redis = await app.state.redis_client.get_redis()
     print("Got redis")
     await initialize_db()
     print("Got db")
-    await create_consumer_group(app.state.redis)
+    await app.state.redis_client.create_consumer_group(
+        stream = app.state.redis_client.JOB_STREAM,
+        group = app.state.redis_client.JOB_GROUP
+    )
+
+    await app.state.redis_client.create_consumer_group(
+        stream = app.state.redis_client.JOB_DLQ,
+        group = app.state.redis_client.JOB_DLQ_GROUP
+    )
 
     print("Starting up...")
 
@@ -59,9 +50,9 @@ async def ping(redis_client=Depends(lambda: app.state.redis)):
             print("Redis not responding")
             raise HTTPException(status_code=503, detail="Redis not responding")
         
-        groups = await redis_client.xinfo_groups(STREAM_NAME)
+        groups = await redis_client.xinfo_groups(app.state.redis_client.JOB_STREAM)
         print(groups)
-        if not any(g['name'] == CONSUMER_GROUP for g in groups):
+        if not any(g['name'] == app.state.redis_client.JOB_GROUP for g in groups):
             print("Consumer group not ready")
             raise HTTPException(status_code=503, detail="Consumer group not ready")
         return JSONResponse(
@@ -104,6 +95,6 @@ async def send_pubsub_message(msg: str, db: AsyncSession = Depends(get_db), redi
                 }
             )
         
-    await redis_client.xadd(STREAM_NAME, { "id": str(batch_record.id), "job_type": "message" })
+    await redis_client.xadd(app.state.redis_client.JOB_STREAM, { "id": str(batch_record.id), "job_type": "message" })
     return { "job_id": str(job_record.job_id) }
 
