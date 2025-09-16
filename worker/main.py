@@ -5,6 +5,7 @@ import common.models.message as message
 import common.models.job as job
 import common.models.batch as batch
 from worker.message import *
+from worker.mnist import *
 from common.redis_client import *
 from dotenv import load_dotenv
 
@@ -42,6 +43,8 @@ async def worker():
                 try:
                     if job_type == "message":
                         await process_message(bid=bid)
+                    if job_type == "mnist":
+                        await process_mnist(bid=bid)
                 except Exception as e:
                     # readd message to stream with retries
                     retries += 1
