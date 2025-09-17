@@ -190,6 +190,9 @@ async def upload(request: Request, db: AsyncSession = Depends(get_db), redis_cli
         buffer = chunk.decode('utf-8').split('\n')
         for line in buffer:
             row = next(csv.reader([line]))
+
+            # add schema validation
+
             b.append(row)
             
             if len(b) >= BATCH_SIZE:

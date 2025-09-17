@@ -56,7 +56,7 @@ services:
       context: .
       target: worker
     image: st4lemon/mnist-worker
-    restart: "on-failure:5"
+    restart: unless-stopped
     env_file:
       - .env
     depends_on:
@@ -71,7 +71,7 @@ services:
       target: reclaimer
     image: st4lemon/mnist-reclaimer
     container_name: mnist-reclaimer
-    restart: "on-failure:5"
+    restart: unless-stopped
     env_file:
       - .env
     depends_on:

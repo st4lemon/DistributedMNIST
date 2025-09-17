@@ -21,7 +21,7 @@ async def process_mnist(bid: int):
                     new_status="done"
                 )
             except Exception as e:
-                db.rollback()
+                await db.rollback()
                 raise
         
     
